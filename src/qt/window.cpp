@@ -81,6 +81,9 @@ void wxQtShortcutHandler::activated()
 
 //##############################################################################
 
+wxBEGIN_EVENT_TABLE( wxWindow, wxWindowBase )
+wxEND_EVENT_TABLE()
+
 #ifdef __WXUNIVERSAL__
     IMPLEMENT_ABSTRACT_CLASS(wxWindow, wxWindowBase)
 #endif // __WXUNIVERSAL__
