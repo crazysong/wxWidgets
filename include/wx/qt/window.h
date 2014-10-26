@@ -46,14 +46,14 @@ public:
                 const wxSize& size = wxDefaultSize,
                 long style = 0,
                 const wxString& name = wxPanelNameStr);
-    
+
     bool Create(wxWindowQt *parent,
                 wxWindowID id,
                 const wxPoint& pos = wxDefaultPosition,
                 const wxSize& size = wxDefaultSize,
                 long style = 0,
                 const wxString& name = wxPanelNameStr);
-    
+
     // Used by all window classes in the widget creation process.
     void PostCreation( bool generic = true );
 
@@ -70,11 +70,11 @@ public:
     // Parent/Child:
     static void QtReparent( QWidget *child, QWidget *parent );
     virtual bool Reparent( wxWindowBase *newParent );
-    
+
     // Z-order
     virtual void Raise();
     virtual void Lower();
-    
+
     // move the mouse to the specified position
     virtual void WarpPointer(int x, int y);
 
@@ -83,11 +83,11 @@ public:
                           const wxRect *rect = (const wxRect *) NULL );
 
     virtual bool SetFont(const wxFont& font);
-    
+
     // get the (average) character size for the current font
     virtual int GetCharHeight() const;
     virtual int GetCharWidth() const;
-    
+
     virtual void SetScrollbar( int orient,
                                int pos,
                                int thumbvisible,
@@ -114,13 +114,13 @@ public:
     virtual WXWidget GetHandle() const;
 
     virtual void SetDropTarget( wxDropTarget *dropTarget );
-    
+
 #if wxUSE_ACCEL
     // accelerators
     // ------------
-    virtual void SetAcceleratorTable( const wxAcceleratorTable& accel );    
+    virtual void SetAcceleratorTable( const wxAcceleratorTable& accel );
 #endif // wxUSE_ACCEL
-    
+
     // wxQt implementation internals:
 
     virtual QPicture *QtGetPicture() const;
@@ -193,7 +193,7 @@ private:
     wxScrollBar *m_horzScrollBar;
     wxScrollBar *m_vertScrollBar;
     void QtOnScrollBarEvent( wxScrollEvent& event );
-    
+
     wxScrollBar *QtGetScrollBar( int orientation ) const;
     wxScrollBar *QtSetScrollBar( int orientation, wxScrollBar *scrollBar=NULL );
 
@@ -210,6 +210,7 @@ private:
     bool m_processingShortcut;
 #endif // wxUSE_ACCEL
 
+    wxDECLARE_EVENT_TABLE();
     wxDECLARE_DYNAMIC_CLASS_NO_COPY( wxWindowQt );
 };
 
