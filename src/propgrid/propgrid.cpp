@@ -539,6 +539,27 @@ wxPropertyGrid::~wxPropertyGrid()
                       wxS("Close(false).)") );
     }
 
+    if ( m_processedEvent )
+    {
+        // We are inside event handler and we cannot delete
+        // editor objects immediatelly. They have to be deleted
+        // later on in the global idle handler.
+#if !WXWIN_COMPATIBILITY_3_0
+        while ( !m_deletedEditorObjects.empty() )
+        {
+            wxObject* obj = m_deletedEditorObjects.back();
+            m_deletedEditorObjects.pop_back();
+
+            wxPendingDelete.Append(obj);
+        }
+#endif
+    }
+    else
+    {
+        // Delete pending editor controls
+        DeletePendingObjects();
+    }
+
     if ( m_doubleBuffer )
         delete m_doubleBuffer;
 
@@ -3924,6 +3945,20 @@ void wxPropertyGrid::SetupChildEventHandling( wxWindow* argWnd )
         NULL, this);
 }
 
+void wxPropertyGrid::DeletePendingObjects()
+{
+#if !WXWIN_COMPATIBILITY_3_0
+    // Delete pending property editors and their event handlers.
+    while ( !m_deletedEditorObjects.empty() )
+    {
+        wxObject* obj = m_deletedEditorObjects.back();
+        m_deletedEditorObjects.pop_back();
+
+        delete obj;
+    }
+#endif
+}
+
 void wxPropertyGrid::DestroyEditorWnd( wxWindow* wnd )
 {
     if ( !wnd )
@@ -3932,7 +3967,11 @@ void wxPropertyGrid::DestroyEditorWnd( wxWindow* wnd )
     wnd->Hide();
 
     // Do not free editors immediately (for sake of processing events)
+#if WXWIN_COMPATIBILITY_3_0
     wxPendingDelete.Append(wnd);
+#else
+    m_deletedEditorObjects.push_back(wnd);
+#endif
 }
 
 void wxPropertyGrid::FreeEditors()
@@ -3948,7 +3987,11 @@ void wxPropertyGrid::FreeEditors()
     {
         wxEvtHandler* handler = m_wndEditor2->PopEventHandler(false);
         m_wndEditor2->Hide();
+#if WXWIN_COMPATIBILITY_3_0
         wxPendingDelete.Append( handler );
+#else
+        m_deletedEditorObjects.push_back(handler);
+#endif
         DestroyEditorWnd(m_wndEditor2);
         m_wndEditor2 = NULL;
     }
@@ -3957,7 +4000,11 @@ void wxPropertyGrid::FreeEditors()
     {
         wxEvtHandler* handler = m_wndEditor->PopEventHandler(false);
         m_wndEditor->Hide();
+#if WXWIN_COMPATIBILITY_3_0
         wxPendingDelete.Append( handler );
+#else
+        m_deletedEditorObjects.push_back(handler);
+#endif
         DestroyEditorWnd(m_wndEditor);
         m_wndEditor = NULL;
     }
@@ -5783,6 +5830,11 @@ void wxPropertyGrid::OnChildKeyDown( wxKeyEvent &event )
 
 void wxPropertyGrid::OnIdle( wxIdleEvent& WXUNUSED(event) )
 {
+    // Skip fake idle events generated e.g. by calling
+    // wxYield from within event handler.
+    if ( m_processedEvent )
+        return;
+
     //
     // Check if the focus is in this control or one of its children
     wxWindow* newFocused = wxWindow::FindFocus();
@@ -5798,6 +5850,9 @@ void wxPropertyGrid::OnIdle( wxIdleEvent& WXUNUSED(event) )
         if ( tlp != m_tlp )
             OnTLPChanging(tlp);
     }
+
+    // Delete pending property editors and their event handlers.
+    DeletePendingObjects();
 
     //
     // Resolve pending property removals

@@ -45,13 +45,29 @@
 #include "wx/sysopt.h"
 #include "wx/tokenzr.h"
 #include "wx/thread.h"
+#include "wx/stdpaths.h"
 
 #if wxUSE_EXCEPTIONS
     // Do we have a C++ compiler with enough C++11 support for
     // std::exception_ptr and functions working with it?
     #if __cplusplus >= 201103L
-        // Any conforming C++11 compiler should have it.
-        #define HAS_EXCEPTION_PTR
+        // Any conforming C++11 compiler should have it, but g++ implementation
+        // of exception handling depends on the availability of the atomic int
+        // operations apparently, so all known version of g++ with C++11 support
+        // (4.7..4.9) fail to provide exception_ptr if the symbol below is not
+        // set to 2 (meaning "always available"), which is notably the case for
+        // MinGW-w64 without -march=486 switch, see #16634.
+        #ifdef __GNUC__
+            // This symbol is always defined in the known g++ version, so
+            // assume that if it isn't defined, things changed for the better
+            // and optimistically suppose that exception_ptr is available.
+            #if !defined(__GCC_ATOMIC_INT_LOCK_FREE) \
+                    || __GCC_ATOMIC_INT_LOCK_FREE > 1
+                #define HAS_EXCEPTION_PTR
+            #endif
+        #else
+            #define HAS_EXCEPTION_PTR
+        #endif
     #elif wxCHECK_VISUALC_VERSION(11)
         // VC++ supports it since version 10, even though it doesn't define
         // __cplusplus to C++11 value, but MSVC 2010 doesn't have a way to test
@@ -206,6 +222,16 @@ wxString wxAppConsoleBase::GetAppName() const
             // the application name is, by default, the name of its executable file
             wxFileName::SplitPath(argv[0], NULL, &name, NULL);
         }
+#if wxUSE_STDPATHS
+        else // fall back to the executable file name, if we can determine it
+        {
+            const wxString pathExe = wxStandardPaths::Get().GetExecutablePath();
+            if ( !pathExe.empty() )
+            {
+                wxFileName::SplitPath(pathExe, NULL, &name, NULL);
+            }
+        }
+#endif // wxUSE_STDPATHS
     }
     return name;
 }
@@ -335,9 +361,9 @@ wxAppTraits *wxAppConsoleBase::GetTraitsIfExists()
 wxAppTraits& wxAppConsoleBase::GetValidTraits()
 {
     static wxConsoleAppTraits s_traitsConsole;
-    wxAppTraits* const traits = wxTheApp ? wxTheApp->GetTraits() : NULL;
+    wxAppTraits* const traits = (wxTheApp ? wxTheApp->GetTraits() : NULL);
 
-    return traits ? *traits : s_traitsConsole;
+    return *(traits ? traits : &s_traitsConsole);
 }
 
 // ----------------------------------------------------------------------------

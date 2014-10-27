@@ -32,6 +32,8 @@ Changes in behaviour which may result in build errors
 
 All:
 
+- Allow calling wxItemContainer::Add() and similar with std::vector<> argument.
+- Add "%z" support to printf()-like functions like wxString::Format() (RIVDSL).
 - Add wxPowerResourceBlocker (Tobias Taschner).
 - Add wxApp::StoreCurrentException() and RethrowStoredException() and implement
   their functionality by default when using C++11 compiler.
@@ -45,6 +47,8 @@ All:
 - Add wxDateTime::GetWeekBasedYear().
 - Specialize std::hash<> for wxString when using C++11.
 - Allow recursive calls to wxYield().
+- Add wxART_FULL_SCREEN standard bitmap (Igor Korot).
+- Fix wxStringTokenizer copy ctor and assignment operator.
 
 Unix:
 
@@ -53,6 +57,7 @@ Unix:
 All (GUI):
 
 - Allow requesting modern (3.x+) OpenGL version in wxGLCanvas (Fabio Arnold).
+- Allow customizing window shown by wxBusyInfo.
 - XRC handler for wxAuiToolBar added (Kinaou Hervé, David Hart).
 - Add wxFD_NO_FOLLOW style for wxFileDialog (Luca Bacci).
 - Add support for embedding bitmaps in generated SVG in wxSVGFileDC (iwbnwif).
@@ -66,7 +71,7 @@ All (GUI):
 - Optimized wxRTC insertion and deletion when floating objects are present.
 - Added on-demand image loading option to wxRTC.
 - Add wxFont::GetBaseFont() (Melroy Tellis).
-- Update included Scintilla to version 3.3.9 (Christian Walther).
+- Update included Scintilla to version 3.4.1 (Christian Walther, Heyoupeng).
 - Add wxStyledTextCtrl copy/paste text events (Christian Walther).
 - Improve RTL support in wxStyledTextCtrl (Zane U. Ji).
 - Add support for loading old V1 BMP files to wxImage (Artur Wieczorek).
@@ -80,10 +85,12 @@ All (GUI):
 - Add wxBitmap ctor from wxCursor.
 - Always disable wxWizard "Back" button on the starting page (pmgrace30).
 - Add wxUIActionSimulator::Select().
+- Add wxOwnerDrawnComboBox::Is{List,Text}Empty() methods.
 
 wxGTK:
 
 - Support building wxGTK3 under Windows (Kolya Kosenko).
+- Fix vertical cell alignment in wxDataViewCtrl.
 
 wxMSW:
 
