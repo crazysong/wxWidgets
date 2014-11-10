@@ -89,7 +89,7 @@ bool wxClipboard::AddData( wxDataObject *data )
 
     // how to add timestamp?
 
-    // Unfortunately I cannot find a way to use the qt clipboard with 
+    // Unfortunately I cannot find a way to use the qt clipboard with
     // a callback to select the data type, so I must copy it all here
 
     for ( size_t i = 0; i < count; i++ )
@@ -128,6 +128,9 @@ bool wxClipboard::GetData( wxDataObject& data )
     wxCHECK_MSG( m_open, false, wxT("clipboard not open") );
 
     const QMimeData *MimeData = QtClipboard->mimeData( (QClipboard::Mode)Mode() );
+    if( !MimeData )
+        return false;
+
     const size_t count = data.GetFormatCount(wxDataObject::Set);
     wxDataFormatArray formats(count);
     data.GetAllFormats(formats.get(), wxDataObject::Set);
@@ -135,7 +138,7 @@ bool wxClipboard::GetData( wxDataObject& data )
     for ( size_t i = 0; i < count; i++ )
     {
         const wxDataFormat format(formats[i]);
-        
+
         // is this format supported by clipboard ?
         if( !MimeData->hasFormat(format.m_MimeType) )
             continue;
