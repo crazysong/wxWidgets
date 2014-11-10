@@ -18,6 +18,9 @@
 #include <QtCore/QEvent>
 #include <QtGui/QPaintEvent>
 
+#include <QDebug>
+#include <QSwipeGesture>
+
 template< typename Handler >
 class wxQtSignalHandler
 {
@@ -83,6 +86,50 @@ protected:
     /* Not implemented here: wxHelpEvent, wxIdleEvent wxJoystickEvent,
      * wxMouseCaptureLostEvent, wxMouseCaptureChangedEvent,
      * wxPowerEvent, wxScrollWinEvent, wxSysColourChangedEvent */
+
+
+    virtual bool event(QEvent *event)
+    {
+ //       if (event->type() == QEvent::TouchBegin)
+ //           int yyp = 4;
+
+        if (event->type() == QEvent::Gesture)
+            return gestureEvent(static_cast<QGestureEvent*>(event));
+
+        return Widget::event(event);
+    }
+
+    bool gestureEvent(QGestureEvent *event)
+    {
+#if 0
+        if (QGesture *swipe = event->gesture(Qt::SwipeGesture))
+            qDebug() << "Swipe" ;//int yyp =5;//swipeTriggered(static_cast<QSwipeGesture *>(swipe));
+        else if (QGesture *pan = event->gesture(Qt::PanGesture))
+            qDebug() << "Pan" ;//int yyp =5;//panTriggered(static_cast<QPanGesture *>(pan));
+        else if (QGesture *pan = event->gesture(Qt::TapAndHoldGesture))
+            qDebug() << "TapAndHold" ;//int yyp =5;//panTriggered(static_cast<QPanGesture *>(pan));
+        else if (QGesture *pan = event->gesture(Qt::TapGesture))
+            qDebug() << "Tap" ;//int yyp =5;//panTriggered(static_cast<QPanGesture *>(pan));
+        if (QGesture *pinch = event->gesture(Qt::PinchGesture))
+            qDebug() << "Pinch" ;//int yyp =5;//pinchTriggered(static_cast<QPinchGesture *>(pinch));
+#endif
+
+        if (QGesture *tah = event->gesture(Qt::TapAndHoldGesture))
+            tapandholdTriggered(static_cast<QTapAndHoldGesture *>(tah));
+
+        return true;
+    }
+
+    void tapandholdTriggered(QTapAndHoldGesture *gesture)
+    {
+        if (gesture->state() == Qt::GestureFinished) {
+            qDebug() << "TAH_Finished";
+            QMouseEvent e(QEvent::MouseButtonPress, gesture->position(),
+                          Qt::RightButton,Qt::RightButton, Qt::NoModifier);
+            mousePressEvent ( &e );
+        }
+    }
+
 
     //wxActivateEvent
     virtual void changeEvent ( QEvent * event )
@@ -254,7 +301,7 @@ protected:
         else
             event->accept();
     }
-    
+
     //wxMoveEvent
     virtual void moveEvent ( QMoveEvent * event )
     {
@@ -266,7 +313,7 @@ protected:
         else
             event->accept();
     }
-    
+
     //wxEraseEvent then wxPaintEvent
     virtual void paintEvent ( QPaintEvent * event )
     {
@@ -302,7 +349,7 @@ protected:
         else
             event->accept();
     }
-    
+
     //wxMouseEvent
     virtual void wheelEvent ( QWheelEvent * event )
     {

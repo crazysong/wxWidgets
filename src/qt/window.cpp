@@ -39,6 +39,15 @@ class wxQtWidget : public wxQtEventSignalHandler< QWidget, wxWindowQt >
 wxQtWidget::wxQtWidget( wxWindowQt *parent, wxWindowQt *handler )
     : wxQtEventSignalHandler< QWidget, wxWindowQt >( parent, handler )
 {
+    setAttribute(Qt::WA_AcceptTouchEvents);
+
+    grabGesture(Qt::TapGesture);
+    grabGesture(Qt::TapAndHoldGesture);
+    grabGesture(Qt::PanGesture);
+    grabGesture(Qt::PinchGesture);
+    grabGesture(Qt::SwipeGesture);
+
+    QTapAndHoldGesture::setTimeout ( 1000 );
 }
 
 // Scroll Area helper (container to show scroll bars for wxScrolledWindow):
