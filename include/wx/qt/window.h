@@ -11,6 +11,7 @@
 
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QScrollArea>
+#include <QButtonGroup>
 
 class WXDLLIMPEXP_FWD_CORE wxScrollBar;
 class WXDLLIMPEXP_FWD_CORE wxQtShortcutHandler;
@@ -149,6 +150,9 @@ public:
 
     virtual QAbstractScrollArea *QtGetScrollBarsContainer() const;
 
+    void setActiveRBGroup(QButtonGroup *bgroup){ m_activeQButtonGroup = bgroup; }
+    QButtonGroup *getActiveRBGroup( void ){ return m_activeQButtonGroup; }
+
 protected:
     virtual void DoGetTextExtent(const wxString& string,
                                  int *x, int *y,
@@ -186,6 +190,7 @@ protected:
 
     QWidget *m_qtWindow;
 
+
 private:
     void Init();
     QScrollArea *m_qtContainer;
@@ -209,6 +214,14 @@ private:
     wxQtShortcutHandler *m_qtShortcutHandler;
     bool m_processingShortcut;
 #endif // wxUSE_ACCEL
+
+    //  Scroll persistence helpers
+    int m_pos_y;
+    int m_pos_x;
+
+    QPointF last_mouse_position;
+
+    QButtonGroup *m_activeQButtonGroup;
 
     wxDECLARE_EVENT_TABLE();
     wxDECLARE_DYNAMIC_CLASS_NO_COPY( wxWindowQt );

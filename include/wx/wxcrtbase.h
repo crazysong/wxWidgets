@@ -201,6 +201,23 @@ WXDLLIMPEXP_BASE void *calloc( size_t num, size_t size );
 #define wxCRT_StrtolW    wcstol
 #define wxCRT_StrtoulW   wcstoul
 
+
+#if defined(__WXQT__) && defined(__ANDROID__)
+    #define wxNEED_WX_STRTOXXW
+#endif
+
+#ifdef wxNEED_WX_STRTOXXW
+    WXDLLIMPEXP_BASE long int wxCRT_StrtolW (const wchar_t* str, wchar_t** endptr, int base);
+    WXDLLIMPEXP_BASE unsigned long int wxCRT_StrtoulW (const wchar_t* str, wchar_t** endptr, int base);
+#else
+    #define wxCRT_StrtolW    wcstol
+    #define wxCRT_StrtoulW wcstoul
+#endif
+
+
+
+
+
 #ifdef __VISUALC__
     #define wxCRT_StrtollA   _strtoi64
     #define wxCRT_StrtoullA  _strtoui64

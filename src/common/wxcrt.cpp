@@ -1317,3 +1317,41 @@ int wxVsscanf(const wxCStrData& str, const char *format, va_list ap)
 int wxVsscanf(const wxCStrData& str, const wchar_t *format, va_list ap)
     { return wxCRT_VsscanfW(str.AsWCharBuf(), format, ap); }
 #endif // HAVE_NO_VSSCANF
+
+
+#ifdef wxNEED_WX_STRTOXXW
+
+WXDLLIMPEXP_BASE unsigned long int wxCRT_StrtoulW (const wchar_t* str, wchar_t** endptr, int base)
+{
+    char buf[40];
+    size_t n = wxWC2MB(buf, str, 39);
+
+    unsigned long ret = strtoul(buf, NULL, base);
+
+    if(endptr){
+        wchar_t* strnc = (wchar_t*)str;
+        *endptr = strnc + n;
+    }
+
+    return ret;
+}
+
+WXDLLIMPEXP_BASE long int wxCRT_StrtolW (const wchar_t* str, wchar_t** endptr, int base)
+{
+
+    char buf[40];
+    size_t n = wxWC2MB(buf, str, 39);
+
+    long ret = strtol(buf, NULL, base);
+
+    if(endptr){
+        wchar_t* strnc = (wchar_t*)str;
+        *endptr = strnc + n;
+    }
+
+    return ret;
+}
+
+
+#endif
+

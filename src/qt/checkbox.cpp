@@ -13,6 +13,9 @@
 #include "wx/qt/private/converter.h"
 #include "wx/qt/private/winevent.h"
 
+#include <QGesture>
+#include "wx/qt/private/SwipeGestureRecognizer.h"
+
 class wxQtCheckBox : public wxQtEventSignalHandler< QCheckBox, wxCheckBox >
 {
 public:
@@ -26,6 +29,11 @@ wxQtCheckBox::wxQtCheckBox( wxWindow *parent, wxCheckBox *handler )
     : wxQtEventSignalHandler< QCheckBox, wxCheckBox >( parent, handler )
 {
     connect(this, &QCheckBox::clicked, this, &wxQtCheckBox::clicked);
+
+//   setAttribute(Qt::WA_AcceptTouchEvents);
+//   grabGesture(Qt::PanGesture);
+//   installEventFilter(parent->GetHandle());
+
 }
 
 void wxQtCheckBox::clicked( bool checked )
@@ -115,8 +123,9 @@ wxCheckBoxState wxCheckBox::DoGet3StateValue() const
 
     case Qt::Checked:
         return wxCHK_CHECKED;
-        
+
     case Qt::PartiallyChecked:
+    default:
         return wxCHK_UNDETERMINED;
     }
 }

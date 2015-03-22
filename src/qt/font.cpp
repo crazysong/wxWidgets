@@ -15,6 +15,7 @@
 
 #include <QtGui/QFont>
 #include <QtGui/QFontInfo>
+#include <QDebug>
 
 static QFont::StyleHint ConvertFontFamily(wxFontFamily family)
 {
@@ -83,7 +84,7 @@ class wxFontRefData: public wxGDIRefData
         {
             return m_nativeFontInfo.m_qtFont == data.m_nativeFontInfo.m_qtFont;
         }
-        
+
     wxNativeFontInfo m_nativeFontInfo;
 };
 
@@ -117,7 +118,8 @@ wxFont::wxFont(const wxString& nativeFontInfoString)
     m_refData = new wxFontRefData();
 
     QFont font;
-    font.fromString(wxQtConvertString( nativeFontInfoString ));
+    if(!font.fromString(wxQtConvertString( nativeFontInfoString )))
+        qDebug() << "QFont::fromString() failed with" << wxQtConvertString( nativeFontInfoString );
     M_FONTDATA.m_qtFont = font;
 }
 

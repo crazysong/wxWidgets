@@ -15,10 +15,10 @@
 
 class wxQtScrollBar : public wxQtEventSignalHandler< QScrollBar, wxScrollBar >
 {
-    
+
     public:
         wxQtScrollBar( wxWindow *parent, wxScrollBar *handler );
-                       
+
     private:
         void actionTriggered( int action );
         void sliderReleased();
@@ -49,7 +49,6 @@ bool wxScrollBar::Create( wxWindow *parent, wxWindowID id,
 {
     m_qtScrollBar = new wxQtScrollBar( parent, this );
     m_qtScrollBar->setOrientation( wxQtConvertOrientation( style, wxSB_HORIZONTAL ));
-
     return QtCreateControl( parent, id, pos, size, style, validator, name );
 }
 
@@ -97,7 +96,7 @@ void wxScrollBar::SetScrollbar(int position, int WXUNUSED(thumbSize),
     // Configure the scrollbar
     if (range != 0 )
     {
-        m_qtScrollBar->setRange( 0, range - pageSize );
+        m_qtScrollBar->setRange( 0, range/* - pageSize*/ );
         m_qtScrollBar->setPageStep( pageSize );
         m_qtScrollBar->setValue( position );
         m_qtScrollBar->show();
@@ -108,6 +107,7 @@ void wxScrollBar::SetScrollbar(int position, int WXUNUSED(thumbSize),
         m_qtScrollBar->hide();
     }
 }
+
 
 QScrollBar *wxScrollBar::GetHandle() const
 {
@@ -124,6 +124,12 @@ wxQtScrollBar::wxQtScrollBar( wxWindow *parent, wxScrollBar *handler )
     connect( this, &QScrollBar::actionTriggered, this, &wxQtScrollBar::actionTriggered );
     connect( this, &QScrollBar::sliderReleased, this, &wxQtScrollBar::sliderReleased );
     connect( this, &QScrollBar::valueChanged, this, &wxQtScrollBar::valueChanged );
+
+
+ //   setStyleSheet("QScrollBar:horizontal {border: 2px solid green;background: cyan;height: 75px;margin: 0px 20px 0 20px;}");
+
+ //   setStyleSheet("QScrollBar:vertical   {border: 2px solid green;background: cyan;width:  75px;margin: 0px 20px 0 20px;}");
+
 }
 
 
@@ -156,7 +162,7 @@ void wxQtScrollBar::actionTriggered( int action )
         default:
             return;
     }
-    
+
     wxScrollBar *handler = GetHandler();
     if ( handler )
     {

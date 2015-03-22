@@ -16,10 +16,26 @@ class wxQtGLWidget : public wxQtEventSignalHandler< QGLWidget, wxGLCanvas >
 {
 public:
     wxQtGLWidget(wxWindow *parent, wxGLCanvas *handler, QGLFormat format)
-        : wxQtEventSignalHandler(parent, handler)
+        : wxQtEventSignalHandler(parent, handler, format)
         {
-            setFormat(format);
+//            setFormat(format);
             setAutoBufferSwap( false );
+
+            setAttribute(Qt::WA_AcceptTouchEvents);
+            grabGesture(Qt::PinchGesture);
+            grabGesture(Qt::PanGesture);
+
+        }
+
+ wxQtGLWidget(wxWindow *parent, wxGLCanvas *handler, QGLContext *context)
+        : wxQtEventSignalHandler(parent, handler, context)
+        {
+            setAutoBufferSwap( false );
+
+            setAttribute(Qt::WA_AcceptTouchEvents);
+            grabGesture(Qt::PinchGesture);
+            grabGesture(Qt::PanGesture);
+
         }
 
 protected:
@@ -67,6 +83,9 @@ void wxQtGLWidget::paintGL()
 //---------------------------------------------------------------------------
 // wxGlContext
 //---------------------------------------------------------------------------
+
+#include "qopenglcontext.h"
+#include "qwindow.h"
 
 IMPLEMENT_CLASS(wxGLContext, wxWindow)
 
@@ -118,7 +137,29 @@ bool wxGLCanvas::Create(wxWindow *parent,
     if (!wxGLCanvas::ConvertWXAttrsToQtGL(attribList, format))
         return false;
 
-    m_qtWindow = new wxQtGLWidget(parent, this, format);
+    //  This complicated two-step is necessary to get a GLES 1.1 context on some devices.
+    //  The default GLES2 context is unsuitable
+//    wxQtGLWidget *dummy = new wxQtGLWidget(parent, this, format);
+
+
+    QOpenGLContext* qcc = new QOpenGLContext(0/*dummy*/);
+    QSurfaceFormat fmt = QGLFormat::toSurfaceFormat(format);
+    fmt.setRenderableType(QSurfaceFormat::OpenGLES);
+//    fmt.setRedBufferSize(8);
+//    fmt.setGreenBufferSize(8);
+//    fmt.setBlueBufferSize(8);
+//    fmt.setAlphaBufferSize(8);
+    fmt.setDepthBufferSize(24);
+    fmt.setStencilBufferSize(8);
+
+    qcc->setFormat(fmt);
+    qcc->create();
+
+    QGLContext *cc = QGLContext::fromOpenGLContext(qcc);
+    m_qtWindow = new wxQtGLWidget(parent, this, cc);
+
+    QWindow *window = m_qtWindow->windowHandle();
+    window->setSurfaceType(QWindow::OpenGLSurface);
 
     return wxWindow::Create( parent, id, pos, size, style, name );
 }
@@ -134,13 +175,19 @@ bool wxGLCanvas::ConvertWXAttrsToQtGL(const int *wxattrs, QGLFormat &format)
 {
     if (!wxattrs)
         return true;
-    return true;
+//    return true;
 
     // set default parameters to false
     format.setDoubleBuffer(false);
     format.setDepth(false);
     format.setAlpha(false);
     format.setStencil(false);
+
+    //  We don't have the option of setting OpenGLES version defined in the
+    //  attribute list Enum.
+
+    // So, just force it here.
+    format.setVersion ( 1,1 );
 
     for ( int arg = 0; wxattrs[arg] != 0; arg++ )
     {

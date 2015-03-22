@@ -40,7 +40,7 @@ void wxQtIdleTimer::idle()
     // Process pending events
     if ( wxTheApp )
         wxTheApp->ProcessPendingEvents();
-    
+
     // Send idle event
     if ( m_eventLoop->ProcessIdle() )
         start( 0 );
@@ -54,7 +54,7 @@ wxQtEventLoopBase::wxQtEventLoopBase()
     {
         new QApplication( wxAppConsole::GetInstance()->argc, wxAppConsole::GetInstance()->argv );
     }
-    
+
     // Create an idle timer to run each time there are no events (timeout = 0)
     m_qtIdleTimer = new wxQtIdleTimer( this );
 
@@ -115,14 +115,18 @@ int wxQtEventLoopBase::DispatchTimeout(unsigned long timeout)
 
 void wxQtEventLoopBase::WakeUp()
 {
-    QAbstractEventDispatcher::instance()->wakeUp();
+    if(QAbstractEventDispatcher::instance())
+        QAbstractEventDispatcher::instance()->wakeUp();
 }
 
 void wxQtEventLoopBase::DoYieldFor(long eventsToProcess)
 {
-    while (wxTheApp && wxTheApp->Pending())
+    int n_loop = 0;
+    while (wxTheApp && wxTheApp->Pending() && (n_loop < 10)){
         // TODO: implement event filtering using the eventsToProcess mask
         wxTheApp->Dispatch();
+        n_loop++;
+    }
 
     wxEventLoopBase::DoYieldFor(eventsToProcess);
 }

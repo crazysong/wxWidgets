@@ -43,7 +43,6 @@ public:
                               bool refresh = true);
 
     virtual QScrollBar* GetHandle() const;
-
 private:
     QScrollBar *m_qtScrollBar;
 

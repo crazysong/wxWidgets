@@ -33,6 +33,13 @@ wxMenu::wxMenu(const wxString& title, long style)
     m_qtMenu = new QMenu( wxQtConvertString( title ));
 
     ApplyStyle( m_qtMenu, style );
+
+    m_qtMenu->addAction(wxQtConvertString( title ));
+// is the same as:
+//QAction *act = new QAction(this);
+//act->setText("some_text");
+//myQMenu->addAction(act);
+
 }
 
 
@@ -172,7 +179,7 @@ bool wxMenuBar::Append( wxMenu *menu, const wxString& title )
 
     QMenu *qtMenu = SetTitle( menu, title );
     m_qtMenuBar->addMenu( qtMenu );
-    
+
     return true;
 }
 

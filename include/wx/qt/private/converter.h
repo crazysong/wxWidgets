@@ -12,6 +12,7 @@
 #define _WX_QT_CONVERTER_H_
 
 #include "wx/defs.h"
+//#include "wx/kbdstate.h"
 #include <QtCore/Qt>
 
 // Rely on overloading and let the compiler pick the correct version, which makes

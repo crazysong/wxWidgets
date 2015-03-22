@@ -29,7 +29,6 @@
 #endif // WX_PRECOMP
 
 #include "wx/glcanvas.h"
-
 // DLL options compatibility check:
 #include "wx/build.h"
 WX_CHECK_BUILD_OPTIONS("wxGL")
@@ -64,6 +63,7 @@ bool wxGLCanvasBase::SetCurrent(const wxGLContext& context) const
 
 bool wxGLCanvasBase::SetColour(const wxString& colour)
 {
+#if 0
     wxColour col = wxTheColourDatabase->Find(colour);
     if ( !col.IsOk() )
         return false;
@@ -90,6 +90,7 @@ bool wxGLCanvasBase::SetColour(const wxString& colour)
 
         glIndexi(pix);
     }
+#endif
 #endif
     return true;
 }
@@ -178,6 +179,7 @@ static bool s_normalsUsed;
 bool SetState( int flag, bool desired )
 {
     bool former = glIsEnabled( flag );
+
     if ( former != desired )
     {
         if ( desired )
@@ -195,6 +197,7 @@ void RestoreState( int flag, bool desired )
     else
         glDisableClientState(flag);
 }
+
 #endif
 
 wxGLAPI::wxGLAPI()
@@ -208,6 +211,7 @@ wxGLAPI::~wxGLAPI()
 {
 }
 
+#if 0 //dsr
 void wxGLAPI::glFrustum(GLfloat left, GLfloat right, GLfloat bottom,
                             GLfloat top, GLfloat zNear, GLfloat zFar)
 {
@@ -374,5 +378,6 @@ void wxGLAPI::glEnd()
 #endif
 }
 
+#endif //dsr
 #endif // wxUSE_GLCANVAS
 

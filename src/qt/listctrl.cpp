@@ -246,6 +246,9 @@ wxTextCtrl* wxListCtrl::GetEditControl() const
 
 QTreeWidgetItem *wxListCtrl::QtGetItem(int id) const
 {
+    if( (id < 0) || (id >= GetItemCount()) )
+        return NULL;
+
     wxCHECK_MSG( id >= 0 && id < GetItemCount(), NULL,
                  wxT("invalid item index in wxListCtrl") );
     QModelIndex index = m_qtTreeWidget->model()->index(id, 0);
@@ -746,7 +749,7 @@ bool wxListCtrl::EnsureVisible(long item)
 }
 
 long wxListCtrl::FindItem(long start, const wxString& str, bool partial)
-{    
+{
     int ret;
     QList <QTreeWidgetItem *> qitems = m_qtTreeWidget->findItems(
                 wxQtConvertString(str),
@@ -783,12 +786,14 @@ long wxListCtrl::HitTest(const wxPoint& point, int &flags, long* ptrSubItem) con
     if ( index.isValid() )
     {
         flags = wxLIST_HITTEST_ONITEM;
-        *ptrSubItem = index.column();
+        if(ptrSubItem)
+            *ptrSubItem = index.column();
     }
     else
     {
         flags = wxLIST_HITTEST_NOWHERE;
-        *ptrSubItem = 0;
+        if(ptrSubItem)
+            *ptrSubItem = 0;
     }
     return index.row();
 }

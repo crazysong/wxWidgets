@@ -24,9 +24,406 @@
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QScrollArea>
 
-
 #define VERT_SCROLLBAR_POSITION 0, 1
 #define HORZ_SCROLLBAR_POSITION 1, 0
+
+
+//      Definition in private/winevent.h
+//      Here is the implementation
+#include <QGesture>
+#include <QMouseEvent>
+#include <math.h>
+#include "wx/qt/private/SwipeGestureRecognizer.h"
+//#include "wx/qt/private/wxQtGesture.h"
+
+
+//      Implementation of private wx gesture events
+wxQT_PanGestureEvent::wxQT_PanGestureEvent(wxEventType commandType, int id)
+:wxEvent(id, commandType)
+{
+}
+
+wxQT_PanGestureEvent::~wxQT_PanGestureEvent()
+{
+}
+
+wxEvent* wxQT_PanGestureEvent::Clone() const
+{
+        wxQT_PanGestureEvent *newevent=new wxQT_PanGestureEvent(*this);
+        newevent->offset=this->offset;
+        newevent->last_offset=this->last_offset;
+        newevent->state=this->state;
+        return newevent;
+}
+
+
+wxQT_PinchGestureEvent::wxQT_PinchGestureEvent(wxEventType commandType, int id)
+:wxEvent(id, commandType)
+{
+}
+
+wxQT_PinchGestureEvent::~wxQT_PinchGestureEvent()
+{
+}
+
+wxEvent* wxQT_PinchGestureEvent::Clone() const
+{
+        wxQT_PinchGestureEvent *newevent=new wxQT_PinchGestureEvent(*this);
+        newevent->scaleFactor = this->scaleFactor;
+        newevent->lastScaleFactor = this->lastScaleFactor;
+        newevent->totalScaleFactor = this->totalScaleFactor;
+
+        return newevent;
+}
+
+
+bool
+SwipeGestureRecognizer::IsValidMove(int dx, int dy)
+{
+   // The moved distance is to small to count as not just a glitch.
+   if ((qAbs(dx) < MINIMUM_DISTANCE) && (qAbs(dy) < MINIMUM_DISTANCE)) {
+      return false;
+   }
+
+   return true;
+}
+
+
+// virtual
+QGesture*
+SwipeGestureRecognizer::create(QObject* pTarget)
+{
+ //  qDebug("SwipeGestureRecognizer::create() called");
+   QGesture *pGesture = new QSwipeGesture(pTarget);
+   return pGesture;
+}
+
+
+// virtual
+QGestureRecognizer::Result
+SwipeGestureRecognizer::recognize(QGesture* pGesture, QObject *pWatched, QEvent *pEvent)
+{
+   QGestureRecognizer::Result result = QGestureRecognizer::Ignore;
+   QSwipeGesture *pSwipe = static_cast<QSwipeGesture*>(pGesture);
+
+   const QTouchEvent *ev = static_cast<const QTouchEvent *>(pEvent);
+
+//   qDebug() << "Swipe recognize" << pEvent;
+
+   const QMouseEvent *me = static_cast<const QMouseEvent *>(pEvent);
+
+   if( me && (me->type() == QMouseEvent::MouseMove) ){
+  //         qDebug() << "Swipe recognize mouse move" << pEvent;
+            QPoint gp = me->globalPos();
+
+        int dx = gp.x() - m_startPoint.x();
+        int dy = gp.y() - m_startPoint.y();
+
+//        qDebug() << "me" <<  gp.x() << gp.y() << dx << dy;
+
+        if(m_started)
+            return QGestureRecognizer::TriggerGesture;
+   }
+
+      if( me && (me->type() == QMouseEvent::MouseButtonRelease) ){
+    //       qDebug() << "Swipe recognize mouse release" << pEvent;
+            QPoint gp = me->globalPos();
+
+        int dx = gp.x() - m_startPoint.x();
+        int dy = gp.y() - m_startPoint.y();
+
+  //      qDebug() << "me" <<  gp.x() << gp.y() << dx << dy;
+
+        if(m_started){
+            if (!IsValidMove(dx, dy)) {
+            // Just a click, so no gesture.
+                result = QGestureRecognizer::CancelGesture;
+            } else {
+            // Compute the angle.
+                qreal angle = ComputeAngle(dx, dy);
+                pSwipe->setSwipeAngle(angle);
+                result = QGestureRecognizer::FinishGesture;
+            }
+
+            m_started = 0;
+
+        }
+            return result;
+   }
+
+
+   switch(pEvent->type()) {
+
+      case QEvent::TouchBegin: {
+          if(!m_started){
+            QTouchEvent::TouchPoint p1 = ev->touchPoints().at(0);
+ //           pSwipe->setProperty("startPoint", p1.startScreenPos().toPoint());
+            m_startPoint = p1.startScreenPos().toPoint();
+
+//         QMouseEvent* pMouseEvent = static_cast<QMouseEvent*>(pEvent);
+//         pSwipe->setProperty("startPoint", pMouseEvent->posF());
+            result = QGestureRecognizer::MayBeGesture;
+ //           qDebug("Swipe gesture started");
+ //           qDebug() << "start" <<  m_startPoint.x() << m_startPoint.y();
+            m_started = 1;
+          }
+          break;
+      }
+//      break;
+
+      case QEvent::TouchUpdate: {
+        QTouchEvent::TouchPoint p1 = ev->touchPoints().at(0);
+        QPointF endPoint = p1.screenPos().toPoint();
+
+        int dx = endPoint.x() - m_startPoint.x();
+        int dy = endPoint.y() - m_startPoint.y();
+
+        if (!m_started)
+            result = QGestureRecognizer::CancelGesture;
+        else if (IsValidMove(dx, dy))
+            result = QGestureRecognizer::TriggerGesture;
+        else
+            result = QGestureRecognizer::Ignore;
+        break;
+      }
+// adjusted
+
+      case QEvent::TouchEnd: {
+ //        const QVariant& propValue = pSwipe->property("startPoint");
+ //        QPointF startPoint = propValue.toPointF();
+
+         QTouchEvent::TouchPoint p1 = ev->touchPoints().at(0);
+         QPointF endPoint = p1.screenPos().toPoint();
+
+//         qDebug() << "end" <<  endPoint.x() << endPoint.y();
+
+         // process distance and direction
+         int dx = endPoint.x() - m_startPoint.x();
+         int dy = endPoint.y() - m_startPoint.y();
+
+         if (!IsValidMove(dx, dy)) {
+            // Just a click, so no gesture.
+            result = QGestureRecognizer::CancelGesture;/*Ignore;*/
+ //           qDebug("Swipe gesture ignored");
+         } else {
+            // Compute the angle.
+            qreal angle = ComputeAngle(dx, dy);
+            pSwipe->setSwipeAngle(angle);
+            result = QGestureRecognizer::FinishGesture;
+//            qDebug("Swipe gesture finished");
+         }
+         m_started = 0;
+      }
+      break;
+      default:
+        break;
+   }
+
+   return result;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+void
+SwipeGestureRecognizer::reset(QGesture *pGesture)
+{
+   pGesture->setProperty("startPoint", QVariant(QVariant::Invalid));
+   m_started = 0;
+//   qDebug("Swipe recognize reset");
+   parent::reset(pGesture);
+}
+
+qreal
+SwipeGestureRecognizer::ComputeAngle(int dx, int dy)
+{
+   double PI = 3.14159265;
+
+   // Need to convert from screen coordinates direction
+   // into classical coordinates direction.
+   dy = -dy;
+
+   double result = atan2((double)dy, (double)dx) ;
+   result = (result * 180) / PI;
+
+   // Always return positive angle.
+   if (result < 0) {
+      result += 360;
+   }
+   return result;
+}
+
+
+
+//  We need a custom Pan gesture recognizer, since the standard one is broken/disfunctional
+
+//      Definition in private/winevent.h
+//      Here is the implementation
+#include <QGesture>
+#include <QMouseEvent>
+#include <math.h>
+#include "wx/qt/private/PanGestureRecognizer.h"
+
+bool
+PanGestureRecognizer::IsValidMove(int dx, int dy)
+{
+   // The moved distance is to small to count as not just a glitch.
+   if ((qAbs(dx) < MINIMUM_DISTANCE) && (qAbs(dy) < MINIMUM_DISTANCE)) {
+      return false;
+   }
+
+   return true;
+}
+
+
+// virtual
+QGesture*
+PanGestureRecognizer::create(QObject* pTarget)
+{
+ //  qDebug("PanGestureRecognizer::create() called");
+   QGesture *pGesture = new QPanGesture(pTarget);
+   return pGesture;
+}
+
+
+// virtual
+QGestureRecognizer::Result
+PanGestureRecognizer::recognize(QGesture* pGesture, QObject *pWatched, QEvent *pEvent)
+{
+   QGestureRecognizer::Result result = QGestureRecognizer::Ignore;
+   QPanGesture *pPan = static_cast<QPanGesture*>(pGesture);
+
+   const QTouchEvent *ev = static_cast<const QTouchEvent *>(pEvent);
+
+   switch(pEvent->type()) {
+      case QEvent::TouchBegin: {
+          if(1/*!m_started*/){
+            QTouchEvent::TouchPoint p1 = ev->touchPoints().at(0);
+ //           pSwipe->setProperty("startPoint", p1.startScreenPos().toPoint());
+            m_startPoint = p1.startScreenPos().toPoint();
+            m_lastPoint = m_startPoint;
+
+            pPan->setLastOffset(QPointF(0,0));
+            pPan->setOffset(QPointF(0,0));
+
+
+//         QMouseEvent* pMouseEvent = static_cast<QMouseEvent*>(pEvent);
+//         pSwipe->setProperty("startPoint", pMouseEvent->posF());
+            result = QGestureRecognizer::MayBeGesture;
+//            result |= QGestureRecognizer::ConsumeEventHint;
+
+ //           qDebug("Pan gesture started");
+ //           qDebug() << "start" <<  m_startPoint.x() << m_startPoint.y();
+            m_started = 1;
+          }
+      }
+      break;
+      case QEvent::TouchEnd: {
+ //        const QVariant& propValue = pSwipe->property("startPoint");
+ //        QPointF startPoint = propValue.toPointF();
+
+         QTouchEvent::TouchPoint p1 = ev->touchPoints().at(0);
+         QPointF endPoint = p1.screenPos().toPoint();
+
+         pPan->setLastOffset(pPan->offset());
+         pPan->setOffset(QPointF(p1.pos().x() - p1.startPos().x(), p1.pos().y() - p1.startPos().y()));
+
+         pPan->setHotSpot(p1.startScreenPos());
+
+
+ //        qDebug() << "end" <<  endPoint.x() << endPoint.y();
+
+         // process distance and direction
+         int dx = endPoint.x() - m_startPoint.x();
+         int dy = endPoint.y() - m_startPoint.y();
+
+         if (!IsValidMove(dx, dy)) {
+            // Just a click, so no gesture.
+            result = QGestureRecognizer::Ignore;
+ //           qDebug("Swipe gesture ignored");
+         } else {
+            result = QGestureRecognizer::FinishGesture;
+ //           qDebug("Pan gesture finished");
+         }
+         m_started = 0;
+      }
+      break;
+
+     case QEvent::TouchUpdate: {
+
+        QTouchEvent::TouchPoint p1 = ev->touchPoints().at(0);
+        QPointF upPoint = p1.screenPos().toPoint();
+
+         pPan->setLastOffset(pPan->offset());
+         pPan->setOffset(QPointF(p1.pos().x() - p1.startPos().x(), p1.pos().y() - p1.startPos().y()));
+
+         pPan->setHotSpot(p1.startScreenPos());
+
+         int dx = upPoint.x() - m_lastPoint.x();
+         int dy = upPoint.y() - m_lastPoint.y();
+
+        if( (dx > 2) || (dx < -2) || (dy > 2) || (dy < -2)){
+               result = QGestureRecognizer::TriggerGesture;
+//               qDebug("Pan gesture trigger");
+
+        } else {
+            result = QGestureRecognizer::Ignore; //MayBeGesture;
+        }
+
+        m_lastPoint = upPoint;
+
+        break;
+    }
+
+
+
+      default:
+        break;
+   }
+
+   return result;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+void
+PanGestureRecognizer::reset(QGesture *pGesture)
+{
+   pGesture->setProperty("startPoint", QVariant(QVariant::Invalid));
+   m_started = 0;
+//   qDebug("Swipe recognize reset");
+   parent::reset(pGesture);
+}
+
+
+
+
+
+
+
+
+//  Static storage of common private gesture recognizer handles
+    uint m_PangestureId;
+    uint m_SwipegestureId;
+
+
 
 // Base Widget helper (no scrollbar, used by wxWindow)
 
@@ -34,21 +431,73 @@ class wxQtWidget : public wxQtEventSignalHandler< QWidget, wxWindowQt >
 {
     public:
         wxQtWidget( wxWindowQt *parent, wxWindowQt *handler );
+        bool eventFilter(QObject *target, QEvent *event);
+
 };
 
 wxQtWidget::wxQtWidget( wxWindowQt *parent, wxWindowQt *handler )
     : wxQtEventSignalHandler< QWidget, wxWindowQt >( parent, handler )
 {
-    setAttribute(Qt::WA_AcceptTouchEvents);
+///    setAttribute(Qt::WA_AcceptTouchEvents);
 
-    grabGesture(Qt::TapGesture);
-    grabGesture(Qt::TapAndHoldGesture);
-    grabGesture(Qt::PanGesture);
-    grabGesture(Qt::PinchGesture);
-    grabGesture(Qt::SwipeGesture);
+ //   grabGesture(Qt::TapGesture);
+ //   grabGesture(Qt::PanGesture);
+ //   grabGesture(Qt::PinchGesture);
+ //   grabGesture(Qt::SwipeGesture);
+ /// grabGesture(Qt::TapAndHoldGesture);
 
-    QTapAndHoldGesture::setTimeout ( 1000 );
+
+  QTapAndHoldGesture::setTimeout ( 1000 );
+
+   // Create a SWIPE recognizer
+   if(!m_SwipegestureId){
+        QGestureRecognizer* pSwipeRecognizer = new SwipeGestureRecognizer();
+        m_SwipegestureId = QGestureRecognizer::registerRecognizer(pSwipeRecognizer);
+   }
+
+
+   // Create a PAN recognizer
+   if(!m_PangestureId){
+        QGestureRecognizer* pPanRecognizer = new PanGestureRecognizer();
+        m_PangestureId = QGestureRecognizer::registerRecognizer(pPanRecognizer);
+   }
+
+   //  If this window is NOT a scrolled window, apply an event filter to catch gestures
+
+   wxWindow *win = wxWindow::QtRetrieveWindowPointer( this );
+   if(win && !win->IsKindOf( CLASSINFO(wxScrolledWindow)) ){
+//          installEventFilter(parent->GetHandle());
+   }
+
+
 }
+
+bool wxQtWidget::eventFilter(QObject *target, QEvent *event)
+{
+    if (event->type() == QEvent::Gesture){
+        qDebug() << "gesture eventFilter";
+
+        QGestureEvent *gesture = static_cast<QGestureEvent*>(event);
+        if (QGesture *pan = gesture->gesture(Qt::PanGesture)){
+            qDebug() << "Pan in filter" ;
+            QPanGesture *pan_gesture = static_cast<QPanGesture *>(pan);
+            wxWindow *win = wxWindow::QtRetrieveWindowPointer( this );
+            if(win && win->IsKindOf( CLASSINFO(wxScrolledWindow)) ){
+                qDebug() << "Filter pan Scrolled Window trigger" ;
+                if(pan_gesture->offset().y() > 0)
+                    win->ScrollWindow(0, 5);
+                else if(pan_gesture->offset().y() < 0)
+                    win->ScrollWindow(0, -5);
+
+            event->accept();
+
+            }
+        }
+    }
+
+    return false;
+}
+
 
 // Scroll Area helper (container to show scroll bars for wxScrolledWindow):
 
@@ -57,12 +506,80 @@ class wxQtScrollArea : public wxQtEventSignalHandler< QScrollArea, wxWindowQt >
 
     public:
         wxQtScrollArea( wxWindowQt *parent, wxWindowQt *handler );
+        bool eventFilter(QObject *target, QEvent *event);
+
 };
 
 wxQtScrollArea::wxQtScrollArea( wxWindowQt *parent, wxWindowQt *handler )
     : wxQtEventSignalHandler< QScrollArea, wxWindowQt >( parent, handler )
 {
+    setAttribute(Qt::WA_AcceptTouchEvents);
+    grabGesture(Qt::SwipeGesture);
+//    grabGesture(Qt::TapAndHoldGesture);
+///    grabGesture(Qt::PanGesture);
+
 }
+
+bool wxQtScrollArea::eventFilter(QObject *target, QEvent *event)
+{
+    if (event->type() == QEvent::Gesture){
+//        qDebug() << "ScrollArea gesture eventFilter";
+
+        QGestureEvent *gesture = static_cast<QGestureEvent*>(event);
+        if (gesture->gesture(Qt::SwipeGesture)){
+            QSwipeGesture * swipe = static_cast<QSwipeGesture *>(gesture->gesture(Qt::SwipeGesture));
+//            qDebug() << "ScrollArea Swipe in filter" ;
+            wxWindow *win = wxWindow::QtRetrieveWindowPointer( this );
+            if(win && win->IsKindOf( CLASSINFO(wxScrolledWindow)) ){
+//                qDebug() << "ScrollArea  Swipe scrolled";
+                qreal angle = swipe->swipeAngle();
+                qDebug() << "angle" << angle;
+                if(QSwipeGesture::Up == swipe->verticalDirection())
+                    win->ScrollWindow(0, -20);
+                else if(QSwipeGesture::Down == swipe->verticalDirection())
+                    win->ScrollWindow(0, 20);
+
+
+                return true;
+            }
+        }
+        else if (gesture->gesture(Qt::PanGesture)){
+            QPanGesture *pan = static_cast<QPanGesture *>(gesture->gesture(Qt::PanGesture));
+//            qDebug() << "ScrollArea Pan in filter" ;
+            wxWindow *win = wxWindow::QtRetrieveWindowPointer( this );
+            if(win && win->IsKindOf( CLASSINFO(wxScrolledWindow)) ){
+//                qDebug() << "ScrollArea  Pan scrolled";
+
+#if 0
+                qreal angle = swipe->swipeAngle();
+                qDebug() << "angle" << angle;
+                if(QSwipeGesture::Up == swipe->verticalDirection())
+                    win->ScrollWindow(0, -20);
+                else if(QSwipeGesture::Down == swipe->verticalDirection())
+                    win->ScrollWindow(0, 20);
+#endif
+
+                return true;
+            }
+        }
+
+    }
+
+    return false;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #if wxUSE_ACCEL || defined( Q_MOC_RUN )
 class wxQtShortcutHandler : public QObject, public wxQtSignalHandler< wxWindowQt >
@@ -148,6 +665,11 @@ void wxWindowQt::Init()
 
     m_mouseInside = false;
 
+    m_pos_y = 0;
+    m_pos_x = 0;
+
+    m_activeQButtonGroup = NULL;
+
 #if wxUSE_ACCEL
     m_qtShortcutHandler = new wxQtShortcutHandler( this );
     m_processingShortcut = false;
@@ -159,9 +681,7 @@ void wxWindowQt::Init()
 wxWindowQt::wxWindowQt()
 {
     Init();
-
 }
-
 
 wxWindowQt::wxWindowQt(wxWindowQt *parent, wxWindowID id, const wxPoint& pos, const wxSize& size,
     long style, const wxString& name)
@@ -227,6 +747,12 @@ bool wxWindowQt::Create( wxWindowQt * parent, wxWindowID id, const wxPoint & pos
                 QtSetScrollBar( wxHORIZONTAL );
             if ( style & wxVSCROLL )
                 QtSetScrollBar( wxVERTICAL );
+
+            m_qtWindow->setAttribute(Qt::WA_AcceptTouchEvents);
+            m_qtWindow->grabGesture(Qt::SwipeGesture);
+///            m_qtWindow->grabGesture(Qt::PanGesture);
+
+
         }
         else
         {
@@ -537,6 +1063,7 @@ wxScrollBar *wxWindowQt::QtSetScrollBar( int orientation, wxScrollBar *scrollBar
 
 void wxWindowQt::SetScrollbar( int orientation, int pos, int thumbvisible, int range, bool refresh )
 {
+
     wxCHECK_RET( CanScroll( orientation ), "Window can't scroll in that orientation" );
 
     //If not exist, create the scrollbar
@@ -546,9 +1073,9 @@ void wxWindowQt::SetScrollbar( int orientation, int pos, int thumbvisible, int r
 
     // Configure the scrollbar if it exists. If range is zero we can get here with
     // scrollBar == NULL and it is not a problem
-    if ( scrollBar )
+    if ( scrollBar && scrollBar->GetHandle())
     {
-        scrollBar->SetScrollbar( pos, thumbvisible, range, thumbvisible, refresh );
+        scrollBar->SetScrollbar( pos, thumbvisible, range * 2, thumbvisible, refresh );
         if ( HasFlag( wxALWAYS_SHOW_SB ) && ( range == 0 ) )
         {
             // Disable instead of hide
@@ -563,9 +1090,10 @@ void wxWindowQt::SetScrollbar( int orientation, int pos, int thumbvisible, int r
 void wxWindowQt::SetScrollPos( int orientation, int pos, bool WXUNUSED( refresh ))
 {
     wxScrollBar *scrollBar = QtGetScrollBar( orientation );
-    wxCHECK_RET( scrollBar, "Invalid scrollbar" );
+//    wxCHECK_RET( scrollBar, "Invalid scrollbar" );
 
-    scrollBar->SetThumbPosition( pos );
+    if(scrollBar)
+        scrollBar->SetThumbPosition( pos );
 }
 
 int wxWindowQt::GetScrollPos( int orientation ) const
@@ -627,17 +1155,63 @@ void wxWindowQt::QtOnScrollBarEvent( wxScrollEvent& event )
 // scroll window to the specified position
 void wxWindowQt::ScrollWindow( int dx, int dy, const wxRect *rect )
 {
-    // check if this is a scroll area (scroll only inner viewport)
+//    qDebug() << dx << dy;
+
     QWidget *widget;
+    int adj_dx = dx;
+    int adj_dy = dy;
+/*
+    wxSize client_size = GetClientSize();
+    wxSize virtual_size = GetVirtualSize();
+
+    int new_y = m_pos_y + dy;
+    if(new_y < 0) new_y = 0;
+    if(new_y > (virtual_size.y - client_size.y))
+        new_y = virtual_size.y - client_size.y;
+
+    adj_dy =  m_pos_y - new_y;
+    m_pos_y = new_y;
+
+
+    int new_x = m_pos_x + dx;
+    if(new_x < 0) new_x = 0;
+    if(new_x > (virtual_size.x - client_size.x))
+        new_x = virtual_size.x - client_size.x;
+
+    adj_dx =  m_pos_x - new_x;
+    m_pos_x = new_x;
+*/
+//    qDebug() << "adjusted scroll" << adj_dx << adj_dy;
+
+
+#if 0
+    if ( QtGetScrollBarsContainer() ){
+        QScrollBar *vsb = QtGetScrollBarsContainer()->verticalScrollBar();
+        int min = vsb->minimum();
+        int max = vsb->maximum();
+        int pos = vsb->value();
+        qDebug() << min << pos << max;
+
+        int new_y = pos - dy;
+        if(new_y < min) new_y = min;
+        if(new_y > max) new_y = max;
+        vsb->setValue(new_y);
+        adj_dy = pos - new_y;
+        qDebug() << adj_dy;
+    }
+#endif
+    // check if this is a scroll area (scroll only inner viewport)
+
     if ( QtGetScrollBarsContainer() )
         widget = QtGetScrollBarsContainer()->viewport();
     else
         widget = GetHandle();
     // scroll the widget or the specified rect (not children)
     if ( rect != NULL )
-        widget->scroll( dx, dy, wxQtConvertRect( *rect ));
+        widget->scroll( adj_dx, adj_dy, wxQtConvertRect( *rect ));
     else
-        widget->scroll( dx, dy );
+        widget->scroll( adj_dx, adj_dy );
+
 }
 
 
@@ -795,15 +1369,15 @@ void wxWindowQt::DoScreenToClient( int *x, int *y ) const
 void wxWindowQt::DoCaptureMouse()
 {
     wxCHECK_RET( GetHandle() != NULL, wxT("invalid window") );
-    GetHandle()->grabMouse();
-    s_capturedWindow = this;
+//    GetHandle()->grabMouse();
+//    s_capturedWindow = this;
 }
 
 
 void wxWindowQt::DoReleaseMouse()
 {
     wxCHECK_RET( GetHandle() != NULL, wxT("invalid window") );
-    GetHandle()->releaseMouse();
+//    GetHandle()->releaseMouse();
     s_capturedWindow = NULL;
 }
 
@@ -1323,7 +1897,27 @@ bool wxWindowQt::QtHandleMouseEvent ( QWidget *handler, QMouseEvent *event )
     // Keyboard modifiers
     wxQtFillKeyboardModifiers( event->modifiers(), &e );
 
-    bool handled = ProcessWindowEvent( e );
+    //  Sometimes we get duplicate Right-Click events, presumably from the TapAndHold Gesture processing
+    //  Avoid propagating the duplicate event to wxWidgets by checking the mouse position.
+    bool bskip = false;
+    if( wxType == wxEVT_RIGHT_DOWN){
+        qDebug() << "a" << QCursor::pos().x() << QCursor::pos().y();
+         QPoint lmp1 = handler->mapToGlobal(mousePos);
+        qDebug() << "b" << lmp1.x() << lmp1.y();
+
+        if((mousePos.x() == last_mouse_position.x()) && (mousePos.y() == last_mouse_position.y())){
+            bskip = true;
+        }
+    }
+    last_mouse_position = mousePos;
+
+
+    bool handled = false;
+    if(!bskip){
+        if( wxType == wxEVT_RIGHT_DOWN)
+            qDebug() << "tah sent" << this;
+        handled = ProcessWindowEvent( e );
+    }
 
     // Determine if mouse is inside the widget
     bool mouseInside = true;
