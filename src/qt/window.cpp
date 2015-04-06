@@ -23,6 +23,7 @@
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QScrollArea>
+#include <QtWidgets/QScroller>
 
 #define VERT_SCROLLBAR_POSITION 0, 1
 #define HORZ_SCROLLBAR_POSITION 1, 0
@@ -438,13 +439,13 @@ class wxQtWidget : public wxQtEventSignalHandler< QWidget, wxWindowQt >
 wxQtWidget::wxQtWidget( wxWindowQt *parent, wxWindowQt *handler )
     : wxQtEventSignalHandler< QWidget, wxWindowQt >( parent, handler )
 {
-///    setAttribute(Qt::WA_AcceptTouchEvents);
+    setAttribute(Qt::WA_AcceptTouchEvents);
 
  //   grabGesture(Qt::TapGesture);
  //   grabGesture(Qt::PanGesture);
  //   grabGesture(Qt::PinchGesture);
  //   grabGesture(Qt::SwipeGesture);
- /// grabGesture(Qt::TapAndHoldGesture);
+  grabGesture(Qt::TapAndHoldGesture);
 
 
   QTapAndHoldGesture::setTimeout ( 1000 );
@@ -513,11 +514,11 @@ class wxQtScrollArea : public wxQtEventSignalHandler< QScrollArea, wxWindowQt >
 wxQtScrollArea::wxQtScrollArea( wxWindowQt *parent, wxWindowQt *handler )
     : wxQtEventSignalHandler< QScrollArea, wxWindowQt >( parent, handler )
 {
-    setAttribute(Qt::WA_AcceptTouchEvents);
-    grabGesture(Qt::SwipeGesture);
+//    setAttribute(Qt::WA_AcceptTouchEvents);
+//    grabGesture(Qt::SwipeGesture);
 //    grabGesture(Qt::TapAndHoldGesture);
 ///    grabGesture(Qt::PanGesture);
-
+    QScroller::grabGesture(this, QScroller::LeftMouseButtonGesture);
 }
 
 bool wxQtScrollArea::eventFilter(QObject *target, QEvent *event)
@@ -748,8 +749,8 @@ bool wxWindowQt::Create( wxWindowQt * parent, wxWindowID id, const wxPoint & pos
             if ( style & wxVSCROLL )
                 QtSetScrollBar( wxVERTICAL );
 
-            m_qtWindow->setAttribute(Qt::WA_AcceptTouchEvents);
-            m_qtWindow->grabGesture(Qt::SwipeGesture);
+///            m_qtWindow->setAttribute(Qt::WA_AcceptTouchEvents);
+///            m_qtWindow->grabGesture(Qt::SwipeGesture);
 ///            m_qtWindow->grabGesture(Qt::PanGesture);
 
 
@@ -815,6 +816,11 @@ void wxWindowQt::PostCreation(bool generic)
     SetForegroundColour(wxColour(GetHandle()->palette().foreground().color()));
 
     GetHandle()->setFont( wxWindowBase::GetFont().GetHandle() );
+    if ( QtGetScrollBarsContainer() ){
+         wxWindow *win = wxWindow::QtRetrieveWindowPointer( QtGetScrollBarsContainer() );
+         win->GetHandle()->setFont( wxWindowBase::GetFont().GetHandle() );
+    }
+
 }
 
 void wxWindowQt::AddChild( wxWindowBase *child )
@@ -969,6 +975,12 @@ bool wxWindowQt::SetFont( const wxFont &font )
     if (GetHandle())
     {
         GetHandle()->setFont( font.GetHandle() );
+
+         if ( QtGetScrollBarsContainer() ){
+            wxWindow *win = wxWindow::QtRetrieveWindowPointer( QtGetScrollBarsContainer() );
+            win->GetHandle()->setFont( font.GetHandle() );
+         }
+
         return true;
     }
 

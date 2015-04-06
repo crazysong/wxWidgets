@@ -129,6 +129,75 @@ protected:
         //  we must "accept" the TouchBegin event in that window.
         // This seems like flawed logic in Qt, though.....
 
+
+        if (event->type() == QEvent::ScrollPrepare){
+            wxWindow *win = wxWindow::QtRetrieveWindowPointer( this );
+            if(win && win->IsKindOf( CLASSINFO(wxScrolledWindow)) ){
+                qDebug() << "ScrollPrepare";
+
+                QScrollPrepareEvent *se = static_cast<QScrollPrepareEvent *>(event);
+
+//                QSizeF sz = frameSize();
+//                se->setViewportSize(sz);
+//                se->setViewportSize(QSizeF(win->GetHandle()->size()));
+//                qDebug() << win->GetHandle()->size();
+        // we claim a huge scrolling area and a huge content position and
+        // hope that the user doesn't notice that the scroll area is restricted
+
+
+                wxScrolledWindow *sw = static_cast<wxScrolledWindow *>(win);
+                if(sw){
+                    int szx, szy;
+                    sw->GetSize(&szx, &szy);
+                    qDebug() << "Actual" << szx << szy;
+                    se->setViewportSize(QSizeF(win->GetHandle()->size()));
+
+                    int svx, svy;
+                    sw->GetVirtualSize(&svx, &svy);
+                    qDebug() << "Virtual" << svx << svy;
+
+                    se->setContentPosRange(QRectF(0.0, 0.0, svx - szx, svy-szy));
+                    qDebug() << "Range" << svx- szx << svy- szy;
+
+                    int vx, vy;
+                    sw->GetViewStart(&vx, &vy);
+                    se->setContentPos( QPointF(vx, vy) );
+                    qDebug() << "Viewstart" << vx << vy;
+
+                }
+//                se->setContentPosRange(QRectF(0.0, 0.0, 0.0, 5000.0));
+
+//                se->setContentPos(QPointF(win->GetScrollPos( wxHORIZONTAL ), win->GetScrollPos( wxVERTICAL ) ));
+//                 qDebug() << win->GetScrollPos( wxVERTICAL );
+
+                se->accept();
+                return true;
+
+            }
+        }
+
+        if (event->type() == QEvent::Scroll){
+            wxWindow *win = wxWindow::QtRetrieveWindowPointer( this );
+            if(win && win->IsKindOf( CLASSINFO(wxScrolledWindow)) ){
+                QScrollEvent *se = static_cast<QScrollEvent *>(event);
+                qreal y = se->contentPos().y();
+                qreal x = se->contentPos().x();
+                qDebug() << "Scroll" << x << y;
+
+                wxScrolledWindow *sw = static_cast<wxScrolledWindow *>(win);
+                if(sw){
+                    sw->Scroll( x, y);
+                    sw->Refresh();
+                }
+
+//                win->GetHandle()->SetScrollPos( wxVERTICAL, y, true);
+                se->accept();
+                return true;
+
+
+            }
+        }
+
 /*
         if (event->type() == QEvent::TouchBegin){
             wxWindow *win = wxWindow::QtRetrieveWindowPointer( this );
@@ -300,13 +369,13 @@ protected:
 
     void panTriggered(QPanGesture *gesture, QEvent *event)
     {
-        int dx = gesture->offset().x() - gesture->lastOffset().x();
-        int dy = gesture->offset().y() - gesture->lastOffset().y();
+//        int dx = gesture->offset().x() - gesture->lastOffset().x();
+//        int dy = gesture->offset().y() - gesture->lastOffset().y();
 
         wxWindow *win = wxWindow::QtRetrieveWindowPointer( this );
-        qDebug() << "pan Window trigger" << dx << dy;
+//        qDebug() << "pan Window trigger" << dx << dy;
 
-#if 1
+#if 0
         if(win && win->IsKindOf( CLASSINFO(wxScrolledWindow)) ){
 
   //         state = Qt::GestureStarted;
