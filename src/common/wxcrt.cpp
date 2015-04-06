@@ -1319,39 +1319,42 @@ int wxVsscanf(const wxCStrData& str, const wchar_t *format, va_list ap)
 #endif // HAVE_NO_VSSCANF
 
 
-#ifdef wxNEED_WX_STRTOXXW
+// On android, most wchar_t functions are broken, so instead we must
+// convert a byte at a time
+#ifdef __ANDROID__
+#define ANDROID_WCSTO_START \
+    int len = wcslen(nptr) + 1; \
+    char dst[len]; \
+    for(int i=0; i<len; i++) \
+        dst[i] = wctob(nptr[i]); \
+    char *dstendp;
 
-WXDLLIMPEXP_BASE unsigned long int wxCRT_StrtoulW (const wchar_t* str, wchar_t** endptr, int base)
+#define ANDROID_WCSTO_END \
+    if(endptr) { \
+        if(dstendp){ int nnl = (int)(nptr) + (dstendp - dst) * sizeof(wchar_t); *endptr = (wchar_t*)nnl;} \
+        else \
+            *endptr = NULL; \
+    } \
+    return d;
+
+long android_wcstol(const wchar_t *nptr, wchar_t **endptr, int base)
 {
-    char buf[40];
-    size_t n = wxWC2MB(buf, str, 39);
-
-    unsigned long ret = strtoul(buf, NULL, base);
-
-    if(endptr){
-        wchar_t* strnc = (wchar_t*)str;
-        *endptr = strnc + n;
-    }
-
-    return ret;
+    ANDROID_WCSTO_START
+    long d = strtol(dst, &dstendp, base);
+    ANDROID_WCSTO_END
 }
 
-WXDLLIMPEXP_BASE long int wxCRT_StrtolW (const wchar_t* str, wchar_t** endptr, int base)
+unsigned long android_wcstoul(const wchar_t *nptr, wchar_t **endptr, int base)
 {
-
-    char buf[40];
-    size_t n = wxWC2MB(buf, str, 39);
-
-    long ret = strtol(buf, NULL, base);
-
-    if(endptr){
-        wchar_t* strnc = (wchar_t*)str;
-        *endptr = strnc + n;
-    }
-
-    return ret;
+    ANDROID_WCSTO_START
+    unsigned long d = strtoul(dst, &dstendp, base);
+    ANDROID_WCSTO_END
 }
 
-
+double android_wcstod(const wchar_t *nptr, wchar_t **endptr)
+{
+    ANDROID_WCSTO_START
+    double d = strtod(dst, &dstendp);
+    ANDROID_WCSTO_END
+}
 #endif
-
