@@ -815,7 +815,7 @@ void wxGenericProgressDialog::EnableClose()
 
 void wxGenericProgressDialog::UpdateMessage(const wxString &newmsg)
 {
-    if ( !newmsg.empty() && newmsg != m_msg->GetLabel() )
+ //   if ( !newmsg.empty() && newmsg != m_msg->GetLabel() )
     {
         m_msg->SetLabel(newmsg);
 

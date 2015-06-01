@@ -712,8 +712,8 @@ wxWindowQt::~wxWindowQt()
     // Delete only if the qt widget was created or assigned to this base class
     if (m_qtWindow)
     {
-        wxLogDebug(wxT("wxWindow::~wxWindow %s m_qtWindow=%p"),
-                   (const char*)GetName(), m_qtWindow);
+//        wxLogDebug(wxT("wxWindow::~wxWindow %s m_qtWindow=%p"),
+//                   (const char*)GetName(), m_qtWindow);
         // Avoid sending further signals (i.e. if deleting the current page)
         m_qtWindow->blockSignals(true);
         // Reset the pointer to avoid handling pending event and signals
@@ -724,8 +724,8 @@ wxWindowQt::~wxWindowQt()
     }
     else
     {
-        wxLogDebug(wxT("wxWindow::~wxWindow %s m_qtWindow is NULL"),
-                   (const char*)GetName());
+//        wxLogDebug(wxT("wxWindow::~wxWindow %s m_qtWindow is NULL"),
+//                   (const char*)GetName());
     }
 }
 
@@ -786,8 +786,8 @@ void wxWindowQt::PostCreation(bool generic)
         // store pointer to the QWidget subclass (to be used in the destructor)
         m_qtWindow = GetHandle();
     }
-    wxLogDebug(wxT("wxWindow::Create %s m_qtWindow=%p"),
-               (const char*)GetName(), m_qtWindow);
+//    wxLogDebug(wxT("wxWindow::Create %s m_qtWindow=%p"),
+//               (const char*)GetName(), m_qtWindow);
 
     // set the background style after creation (not before like in wxGTK)
     // (only for generic controls, to use qt defaults elsewere)
@@ -926,7 +926,7 @@ void wxWindowQt::WarpPointer(int x, int y)
 
 void wxWindowQt::Update()
 {
-    wxLogDebug(wxT("wxWindow::Update %s"), (const char*)GetName());
+//    wxLogDebug(wxT("wxWindow::Update %s"), (const char*)GetName());
     // send the paint event to the inner widget in scroll areas:
     if ( QtGetScrollBarsContainer() )
     {
@@ -952,15 +952,15 @@ void wxWindowQt::Refresh( bool WXUNUSED( eraseBackground ), const wxRect *rect )
     {
         if ( rect != NULL )
         {
-            wxLogDebug(wxT("wxWindow::Refresh %s rect %d %d %d %d"),
-                       (const char*)GetName(),
-                       rect->x, rect->y, rect->width, rect->height);
+//            wxLogDebug(wxT("wxWindow::Refresh %s rect %d %d %d %d"),
+//                       (const char*)GetName(),
+//                       rect->x, rect->y, rect->width, rect->height);
             widget->update( wxQtConvertRect( *rect ));
         }
         else
         {
-            wxLogDebug(wxT("wxWindow::Refresh %s"),
-                       (const char*)GetName());
+//            wxLogDebug(wxT("wxWindow::Refresh %s"),
+//                       (const char*)GetName());
             widget->update();
         }
     }
@@ -1660,9 +1660,10 @@ bool wxWindowQt::QtHandlePaintEvent ( QWidget *handler, QPaintEvent *event )
                             // Ensure DC is cleared if handler didn't and Qt will not do it
                             if ( UseBgCol() && !GetHandle()->autoFillBackground() )
                             {
-                                wxLogDebug(wxT("wxWindow::QtHandlePaintEvent %s clearing DC to %s"),
-                                           (const char*)GetName(), GetBackgroundColour().GetAsString()
-                                           );
+// sometimes crashes with bad chacater conversion
+//                                wxLogDebug(wxT("wxWindow::QtHandlePaintEvent %s clearing DC to %s"),
+//                                           (const char*)GetName(), GetBackgroundColour().GetAsString()
+//                                           );
                                 dc.SetBackground(GetBackgroundColour());
                                 dc.Clear();
                             }
@@ -1709,8 +1710,8 @@ bool wxWindowQt::QtHandlePaintEvent ( QWidget *handler, QPaintEvent *event )
         else
         {
             // Painter didn't begun, not handled by wxWidgets:
-            wxLogDebug(wxT("wxWindow::QtHandlePaintEvent %s Qt widget painter begin failed"),
-                       (const char*)GetName() );
+//            wxLogDebug(wxT("wxWindow::QtHandlePaintEvent %s Qt widget painter begin failed"),
+//                       (const char*)GetName() );
             return false;
         }
     }

@@ -141,7 +141,6 @@ bool wxGLCanvas::Create(wxWindow *parent,
     //  The default GLES2 context is unsuitable
 //    wxQtGLWidget *dummy = new wxQtGLWidget(parent, this, format);
 
-
     QOpenGLContext* qcc = new QOpenGLContext(0/*dummy*/);
     QSurfaceFormat fmt = QGLFormat::toSurfaceFormat(format);
     fmt.setRenderableType(QSurfaceFormat::OpenGLES);
@@ -161,7 +160,9 @@ bool wxGLCanvas::Create(wxWindow *parent,
     QWindow *window = m_qtWindow->windowHandle();
     window->setSurfaceType(QWindow::OpenGLSurface);
 
-    return wxWindow::Create( parent, id, pos, size, style, name );
+    wxWindow::Create( parent, id, pos, size, style, name );
+
+    return true;
 }
 
 bool wxGLCanvas::SwapBuffers()
@@ -296,5 +297,15 @@ wxGLCanvasBase::IsDisplaySupported(const int *attribList)
 
     return QGLWidget(format).isValid();
 }
+
+#if 0
+// Generic "Slot" to conect destruction signal for debugging purposes:
+//  Not sure why we need another instance of this static method, but qtu_gl.so will not load otherwise.
+void wxQtHandleDestroyedSignal(QObject *qobj)
+{
+   wxLogDebug( wxT("%s was destroyed by Qt. pointer=%p"),
+               QObject::staticMetaObject.className(), qobj );
+}
+#endif
 
 #endif // wxUSE_GLCANVAS

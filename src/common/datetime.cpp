@@ -808,7 +808,7 @@ wxDateTime::Country wxDateTime::GetCountry()
         struct tm tmstruct;
         struct tm *tm = wxLocaltime_r(&t, &tmstruct);
 
-        wxString tz = CallStrftime(wxT("%Z"), tm);
+        wxString tz = _T("EST"); //CallStrftime(wxT("%Z"), tm);
         if ( tz == wxT("WET") || tz == wxT("WEST") )
         {
             ms_country = UK;

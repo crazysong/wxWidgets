@@ -152,12 +152,76 @@ wxConfigBase *wxConfigBase::Create()
     }
 
 
-IMPLEMENT_READ_FOR_TYPE(String, wxString, const wxString&, ExpandEnvVars)
-IMPLEMENT_READ_FOR_TYPE(Long, long, long, long)
+///IMPLEMENT_READ_FOR_TYPE(String, wxString, const wxString&, ExpandEnvVars)
+///IMPLEMENT_READ_FOR_TYPE(Long, long, long, long)
 IMPLEMENT_READ_FOR_TYPE(Double, double, double, double)
 IMPLEMENT_READ_FOR_TYPE(Bool, bool, bool, bool)
 
 #undef IMPLEMENT_READ_FOR_TYPE
+
+bool wxConfigBase::Read(const wxString& key, wxString *val) const
+    {
+
+        if ( !DoReadString(key, val) )
+            return false;
+
+        return true;
+    }
+
+bool wxConfigBase::Read(const wxString& key,
+                            wxString *val,
+                            const wxString& defVal) const
+    {
+
+        bool read = DoReadString(key, val);
+        if ( !read )
+        {
+            *val = defVal;
+        }
+
+
+        return read;
+    }
+
+bool wxConfigBase::Read(const wxString& key, long *val) const
+    {
+
+        if ( !DoReadLong(key, val) )
+            return false;
+
+        return true;
+    }
+
+bool wxConfigBase::Read(const wxString& key,
+                            long *val,
+                            long defVal) const
+    {
+
+     wxString str;
+    if ( !Read(key, &str) ){
+            *val = defVal;
+            return false;
+    }
+
+    // extra spaces shouldn't prevent us from reading numeric values
+    str.Trim();
+
+    long l;
+        if(str.ToLong(&l)){
+            *val = l;
+            return true;
+        }
+        else{
+            *val = defVal;
+            return false;
+
+        }
+
+
+    }
+
+
+
 
 // int is stored as long
 bool wxConfigBase::Read(const wxString& key, int *pi) const

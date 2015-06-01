@@ -118,6 +118,12 @@ const wxBitmap &wxMenuItem::GetBitmap() const
     return s_bitmap;
 }
 
+void wxMenuItem::SetFont(const wxFont& font)
+{
+    m_qtAction->setFont(font.GetHandle());
+}
+
+
 QAction *wxMenuItem::GetHandle() const
 {
     return m_qtAction;
@@ -158,7 +164,7 @@ wxQtAction::wxQtAction( wxMenu *parent, int id, const wxString &text, const wxSt
 
     connect( this, &QAction::triggered, this, &wxQtAction::onActionTriggered );
 }
- 
+
 
 void wxQtAction::onActionTriggered( bool checked )
 {

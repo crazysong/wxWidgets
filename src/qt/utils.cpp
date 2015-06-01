@@ -76,7 +76,7 @@ wxWindow *wxFindWindowAtPoint(const wxPoint& pt)
 wxWindow *wxFindWindowAtPointer(wxPoint& pt)
 {
     pt = wxQtConvertPoint( QCursor::pos() );
-    
+
     return wxFindWindowAtPoint( pt );
 }
 
@@ -147,7 +147,7 @@ wxWindow *wxGetActiveWindow()
         wxWindow* win = node->GetData();
         if ( win->GetHandle() == w )
             return win;
-        
+
         node = node->GetPrevious();
     }
 
@@ -170,3 +170,12 @@ void wxQtHandleDestroyedSignal(QObject *qobj)
    wxLogDebug( wxT("%s was destroyed by Qt. pointer=%p"),
                QObject::staticMetaObject.className(), qobj );
 }
+
+#if 0
+#include <netdb.h>
+int gethostbyaddr_r(const char *, int, int, struct hostent *, char *, size_t, struct hostent **, int *)
+{
+    wxLogMessage(_T("Called stub gethostbyaddr_r()"));
+    return 0;
+}
+#endif

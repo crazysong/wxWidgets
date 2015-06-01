@@ -123,6 +123,8 @@ bool wxTextCtrl::Create(wxWindow *parent,
     {
         m_qtTextEdit =  new wxQtTextEdit( parent, this );
         m_qtLineEdit = NULL;
+
+        m_qtTextEdit->setReadOnly( (style & wxTE_READONLY) != 0);
     }
     if ( QtCreateControl( parent, id, pos, size, style, validator, name ) )
     {

@@ -133,7 +133,7 @@ protected:
         if (event->type() == QEvent::ScrollPrepare){
             wxWindow *win = wxWindow::QtRetrieveWindowPointer( this );
             if(win && win->IsKindOf( CLASSINFO(wxScrolledWindow)) ){
-                qDebug() << "ScrollPrepare";
+//                qDebug() << "ScrollPrepare";
 
                 QScrollPrepareEvent *se = static_cast<QScrollPrepareEvent *>(event);
 
@@ -149,20 +149,20 @@ protected:
                 if(sw){
                     int szx, szy;
                     sw->GetSize(&szx, &szy);
-                    qDebug() << "Actual" << szx << szy;
+//                    qDebug() << "Actual" << szx << szy;
                     se->setViewportSize(QSizeF(win->GetHandle()->size()));
 
                     int svx, svy;
                     sw->GetVirtualSize(&svx, &svy);
-                    qDebug() << "Virtual" << svx << svy;
+//                    qDebug() << "Virtual" << svx << svy;
 
                     se->setContentPosRange(QRectF(0.0, 0.0, svx - szx, svy-szy));
-                    qDebug() << "Range" << svx- szx << svy- szy;
+//                    qDebug() << "Range" << svx- szx << svy- szy;
 
                     int vx, vy;
                     sw->GetViewStart(&vx, &vy);
                     se->setContentPos( QPointF(vx, vy) );
-                    qDebug() << "Viewstart" << vx << vy;
+//                    qDebug() << "Viewstart" << vx << vy;
 
                 }
 //                se->setContentPosRange(QRectF(0.0, 0.0, 0.0, 5000.0));
@@ -182,7 +182,7 @@ protected:
                 QScrollEvent *se = static_cast<QScrollEvent *>(event);
                 qreal y = se->contentPos().y();
                 qreal x = se->contentPos().x();
-                qDebug() << "Scroll" << x << y;
+//                qDebug() << "Scroll" << x << y;
 
                 wxScrolledWindow *sw = static_cast<wxScrolledWindow *>(win);
                 if(sw){
@@ -453,6 +453,7 @@ protected:
 #endif
 
 
+#if wxUSE_OPENGL
         if(win && win->IsKindOf( CLASSINFO(wxGLCanvas)) ){
 
 //            qDebug() << "PanGesture event";
@@ -470,11 +471,13 @@ protected:
             win->ProcessWindowEvent( ev );
             event->accept();
         }
+#endif
 
     }
 
     void pinchTriggered(QPinchGesture *gesture, QEvent *event)
     {
+#if wxUSE_OPENGL
         wxWindow *win = wxWindow::QtRetrieveWindowPointer( this );
         if(win && win->IsKindOf( CLASSINFO(wxGLCanvas)) ){
 
@@ -494,6 +497,7 @@ protected:
             event->accept();
 
         }
+#endif
     }
 
 
@@ -768,6 +772,19 @@ protected:
             Widget::wheelEvent(event);
         else
             event->accept();
+    }
+
+    virtual void dragEnterEvent ( QDragEnterEvent * event )
+    {
+        qDebug() << "DragEnterEvent";
+        event->setAccepted(false);
+    }
+
+    virtual void dragMoveEvent ( QDragMoveEvent * event )
+    {
+        qDebug() << "DragMoveEvent";
+        event->setAccepted(false);
+
     }
 
     /* Unused Qt events

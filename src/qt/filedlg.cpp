@@ -16,6 +16,7 @@
 #include "wx/dirdlg.h"
 
 #include <QtWidgets/QFileDialog>
+#include <QtWidgets/QTreeView>
 
 class wxQtFileDialog : public wxQtEventSignalHandler< QFileDialog, wxDialog >
 {
@@ -38,9 +39,11 @@ public:
 
         if (style & wxFD_SAVE)
             setAcceptMode(AcceptSave);
-            
+
         if (style & wxFD_CHANGE_DIR)
             connect(this, &QDialog::accepted, this, &wxQtFileDialog::changeDirectory);
+
+
     }
 
     void SetWildcard(const wxString& wildCard)
@@ -97,6 +100,29 @@ bool wxFileDialog::Create(wxWindow *parent,
 {
     m_qtWindow = new wxQtFileDialog( parent, this, message, defaultDir,
                                      defaultFile, wildCard, style);
+
+    QWidget *w1 = QApplication::activeWindow();
+
+    QWidget *p2 = w1->findChild<QWidget *>("page_2");
+    if(p2){
+        QTreeView *t = p2->findChild<QTreeView *>("treeView");
+        if (t) {
+            t->setDragDropMode(QAbstractItemView::NoDragDrop);
+            t->setDragEnabled(false);
+            t->viewport()->setAcceptDrops(false);
+        }
+    }
+
+    QWidget *p = w1->findChild<QWidget *>("page");
+    if(p){
+        QListView *l = p->findChild<QListView *>("listView");
+        if (l) {
+            l->setDragDropMode(QAbstractItemView::NoDragDrop);
+            l->setDragEnabled(false);
+            l->setMovement(QListView::Static);
+            l->viewport()->setAcceptDrops(false);
+        }
+    }
 
     return wxTopLevelWindow::Create( parent, wxID_ANY, message, pos, sz, style, name );
 }
@@ -232,6 +258,31 @@ bool wxDirDialog::Create(wxWindow *parent,
                          const wxString& name)
 {
     m_qtWindow = new wxQtDirDialog( parent, this, message, defaultPath, style);
+
+    QWidget *w1 = QApplication::activeWindow();
+
+    QWidget *p2 = w1->findChild<QWidget *>("page_2");
+    if(p2){
+        QTreeView *t = p2->findChild<QTreeView *>("treeView");
+        if (t) {
+            t->setDragDropMode(QAbstractItemView::NoDragDrop);
+            t->setDragEnabled(false);
+            t->viewport()->setAcceptDrops(false);
+        }
+    }
+
+    QWidget *p = w1->findChild<QWidget *>("page");
+    if(p){
+        QListView *l = p->findChild<QListView *>("listView");
+        if (l) {
+            l->setDragDropMode(QAbstractItemView::NoDragDrop);
+            l->setDragEnabled(false);
+            l->setMovement(QListView::Static);
+            l->viewport()->setAcceptDrops(false);
+        }
+    }
+
+
     return wxTopLevelWindow::Create( parent, wxID_ANY, message, pos, size, style, name );
 }
 

@@ -93,6 +93,28 @@ void wxStatusBar::UpdateFields()
 {
     // is it a good idea to recreate all the panes every update?
 
+    if(m_qtPanes.size() == m_panes.GetCount()){
+        for (size_t i = 0; i < m_panes.GetCount(); i++)
+        {
+        //Set sizes
+            int width = m_panes[i].GetWidth();
+
+ //           qDebug() << "Resize" << i << m_panes.GetCount() << width;
+
+            QLabel *pane = m_qtPanes[i];
+
+            if ( width >= 0 )
+            {
+            //Fixed width field
+                pane->setMinimumSize( QSize(width, 0) );
+                pane->setMaximumWidth( width );
+            }
+        }
+
+        return;
+    }
+
+
     while ( !m_qtPanes.isEmpty() )
     {
         //Remove all panes
@@ -104,13 +126,20 @@ void wxStatusBar::UpdateFields()
         //Set sizes
         int width = m_panes[i].GetWidth();
 
+//        qDebug() << i << m_panes.GetCount() << width;
+
         QLabel *pane = new QLabel( m_qtStatusBar );
-        m_qtPanes.append( pane );
+        if(i == m_panes.GetCount()-1)
+            pane->setAlignment( Qt::AlignRight | Qt::AlignVCenter );    // prettier
+
+        m_qtPanes.append( pane ); //        AlignVCenter = 0x0080,   AlignBaseline = 0x0100,
+
 
         if ( width >= 0 )
         {
             //Fixed width field
             pane->setMinimumSize( QSize(width, 0) );
+            pane->setMaximumWidth( width );
             m_qtStatusBar->addWidget( pane );
         }
         else

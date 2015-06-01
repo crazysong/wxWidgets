@@ -22,6 +22,8 @@
     #define wxUSE_EVENTLOOP_SOURCE 0
 #endif
 
+//    #define wxUSE_EVENTLOOP_SOURCE 1
+
 #if wxUSE_EVENTLOOP_SOURCE
     class wxEventLoopSource;
     class wxEventLoopSourceHandler;

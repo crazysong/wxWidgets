@@ -36,6 +36,8 @@ public:
     void SetBitmap(const wxBitmap& bitmap);
     const wxBitmap& GetBitmap() const;
 
+    void SetFont(const wxFont& font);
+
     virtual QAction *GetHandle() const;
 
 private:
