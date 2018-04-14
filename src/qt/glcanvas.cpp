@@ -188,7 +188,7 @@ bool wxGLCanvas::ConvertWXAttrsToQtGL(const int *wxattrs, QGLFormat &format)
     //  attribute list Enum.
 
     // So, just force it here.
-    format.setVersion ( 1,1 );
+    format.setVersion ( 2,0 );
 
     for ( int arg = 0; wxattrs[arg] != 0; arg++ )
     {
