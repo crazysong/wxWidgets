@@ -24,10 +24,12 @@ public:
 
     void SetOffset(wxPoint p){ offset = p; }
     void SetLastOffset(wxPoint p){ last_offset = p; }
+    void SetCursorPos(wxPoint p){ cursorPos = p; }
     void SetState( wxGestureState s){ state = s; }
 
     wxPoint GetOffset(){ return offset; };
     wxPoint GetLastOffset(){ return last_offset; }
+    wxPoint GetCursorPos(){ return cursorPos; }
     wxGestureState GetState(){ return state; }
 
     // required for sending with wxPostEvent()
@@ -35,6 +37,7 @@ public:
 
     wxPoint offset;
     wxPoint last_offset;
+    wxPoint GetCursorPos(){ return cursorPos; }
     wxGestureState state;
 
 };
@@ -52,11 +55,13 @@ public:
     void SetScaleFactor(float s){ scaleFactor = s; }
     void SetLastScaleFactor(float s){ lastScaleFactor = s; }
     void SetTotalScaleFactor( float s){ totalScaleFactor = s; }
+    void SetCenterPoint(wxPoint p){ centerPoint = p; }
     void SetState( wxGestureState s){ state = s; }
 
     float GetScaleFactor(){ return scaleFactor; }
     float GetLastScaleFactor(){ return lastScaleFactor; }
     float GetTotalScaleFactor(){ return totalScaleFactor; }
+    wxPoint GetCenterPoint(){ return centerPoint; }
     wxGestureState GetState(){ return state; }
 
     // required for sending with wxPostEvent()
@@ -65,6 +70,7 @@ public:
     float scaleFactor;
     float lastScaleFactor;
     float totalScaleFactor;
+    wxPoint centerPoint;
     wxGestureState state;
 
 };
