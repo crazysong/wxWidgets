@@ -465,6 +465,7 @@ protected:
 
             QPoint last_offset = gesture->lastOffset().toPoint();
             ev.SetLastOffset( wxQtConvertPoint( last_offset ) );
+            //TODO ev.SetCursorPos ( wxQtConvertPoint( last_offset ) );
 
             ev.SetState((wxGestureState)(gesture->state() - 1));
 
@@ -484,6 +485,7 @@ protected:
             qreal last_sf = gesture->lastScaleFactor();
             qreal this_sf = gesture->scaleFactor();
             qreal total_sf = gesture->totalScaleFactor();
+            QPoint centerPoint = gesture->centerPoint().toPoint();
 
 //           qDebug() << " GL PinchGesture event" << last_sf << this_sf << total_sf;
 
@@ -491,6 +493,7 @@ protected:
             ev.SetLastScaleFactor(last_sf);
             ev.SetScaleFactor(this_sf);
             ev.SetTotalScaleFactor(total_sf);
+            ev.SetCenterPoint( wxQtConvertPoint( centerPoint ) );
             ev.SetState((wxGestureState)(gesture->state() - 1));
 
             win->ProcessWindowEvent( ev );
